@@ -1,0 +1,86 @@
+<html>
+	<head>
+		<title>Viewer</title>
+		<script type="text/javascript" src="jquery.js"></script>
+	</head>
+	<body>
+		<div style ="width:1000px;height:500px;" id="viewwindow">
+			<img id="pageimg" style="height:500px; width:500px;float:left"/>
+			<p id="pagetext" style="width:500px;height:500px;float:right"></p>
+		</div>
+		<div style="width:1000px;height:300px;" id="navigation">
+			<a href="" id="prevchaplink">&lt; &lt; Previous Chapter</a>&nbsp;
+			<a href="" id="prevpagelink">&lt; Prev Page</a>&nbsp;
+			<a href="" id="nextpagelink">Next Page &gt;</a>&nbsp;
+			<a href="" id="nextchaplink">Next Chapter &gt; &gt;</a>&nbsp;
+		</div>
+		<script>
+			function pad(num, size) {
+    				var s = num+"";
+    				while (s.length < size) s = "0" + s;
+    				return s;
+			}
+function GetURLParameter(sParam) {
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
+}
+function fileExists(inurl) {
+	result = false;
+	console.log(inurl);
+	$.ajax({
+     		async: false,
+     		type: 'GET',
+     		url: inurl,
+     		success: function(data) {
+          		result = true;
+     		}
+	});
+	console.log(result);
+	return result;
+}
+
+			var chapter = GetURLParameter("ch");
+			var page = GetURLParameter("p");
+			page = parseInt(page);
+			var jsonfile = pad(chapter,2) + ".json";
+			if (parseInt(chapter) == 1) {
+				$("#prevchaplink").hide();
+			} else {
+				$("#prevchaplink").attr("href","viewer.html?ch=" + (parseInt(chapter)-1).toString() + "&p=1");
+			}
+			if (page == 1) {
+                                $("#prevpagelink").hide();
+                        }
+
+			if ((fileExists("./" + pad(parseInt(chapter)+1,2) + ".json"))) {
+				$("#nextchaplink").attr("href","viewer.html?ch=" + (parseInt(chapter)+1).toString() + "&p=1");
+                        } else {
+				$("#nextchaplink").hide();
+                        }
+
+			$.getJSON(jsonfile, function(json) {
+   				//console.log(json); // this will show the info it in firebug console
+				pages = json['pages'];
+				console.log(pages[page]);
+				temp = pages[page];
+				thepage = temp[0];
+				$("#pageimg").attr("src", thepage["img"]);
+				$("#pagetext").html(thepage["text"]);
+				$("#prevpagelink").attr("href","viewer.html?ch=" + chapter + "&p=" + (page-1).toString());
+				$("#nextpagelink").attr("href","viewer.html?ch=" + chapter + "&p=" + (page+1).toString());
+				if ((page+1) > pages.length) {
+					$("#nextpagelink").hide();
+				}
+			});
+			
+		</script>
+	</body>
+</html>
