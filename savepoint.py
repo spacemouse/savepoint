@@ -9,6 +9,7 @@ from html.parser import HTMLParser
 from bs4 import BeautifulSoup
 import json
 import cgi
+import re
 
 
 def converttext(text):
@@ -52,8 +53,12 @@ print("Alright.")
 # open url
 with urllib.request.urlopen(url) as response:
    page = response.read()
+#   page = re.sub('<iframe.*?</iframe>', '', str(page))
 #page = html.fromstring(theraw)
-soup = BeautifulSoup(page, 'html.parser')
+soup = BeautifulSoup(page, "lxml")
+#remove iframes
+for tag in soup.find_all('iframe'):
+    tag.replaceWith('')
 i = 1 #iterations
 mainthread = soup.find("form", id="delform") #find the main thread
 firstpostdiv = mainthread.find("div", class_="postwidth") # this has the first image in it
@@ -80,26 +85,32 @@ with open(outputfile, mode='w', encoding='utf-8') as f:
 #with open(outputfile, mode='r+', encoding='utf-8') as f:
 #    thejson = json.load(f)
     for tag in mainthread.find_all("table"):
-        i = i + 1 #increment post number
-        postdiv = tag.find("div", class_="postwidth") #find the post
-        #we need to check if this has an image
-        if (postdiv.find("img")): #has an image
-            postimg = postdiv.find("a", target="_blank")
 
-            checkstring = postimg['href']
-            if ("sage" in checkstring):
-                postimg = postimg.find_next("a")
-            postimgsrc = domain + postimg['href'] # first image
-            postblock = tag.find("blockquote") # this is the text of the first post
-            #poststrings = postblock.strings
-            poststring = converttext(postblock)
-            print(postimgsrc)
-            print("-")
-            print(poststring)
-            print("--")
-            newpage = [{'pagenum' : i, 'img' : postimgsrc, 'text' : str(poststring)}]
-            #newjson = {'pages' : newpage }
-            thejson['pages'].append(newpage)
+      i = i + 1 #increment post number
+      if ((tag.find("iframe")) is None): #make sure no iframes, iframes mess it up
+        postdiv = tag.find("div", class_="postwidth") #find the post
+        if (postdiv is None): 
+            cat = 1
+        else:
+          #we need to check if this has an image
+          if (postdiv.find("img")): #has an image
+            postimg = postdiv.find("a", target="_blank")
+            if (postimg is None):
+                cat = 1
+            else:
+                checkstring = postimg['href']
+                if ("sage" in checkstring):
+                    postimg = postimg.find_next("a")
+                postimgsrc = domain + postimg['href'] # first image
+                postblock = tag.find("blockquote") # this is the text of the first post
+#                if ((postblock.find("iframe")) is None): #make sure no iframes, iframes mess it up
+                poststring = converttext(postblock)
+                print(postimgsrc)
+                print("-")
+                print(poststring)
+                print("--")
+                newpage = [{'pagenum' : i, 'img' : postimgsrc, 'text' : str(poststring)}]
+                thejson['pages'].append(newpage)
     # finally, write to file
     json.dump(thejson,f, indent=4, sort_keys=True)
 #we're done, now make it look good
