@@ -97,6 +97,8 @@ with open(outputfile, mode='w', encoding='utf-8') as f:
             postimg = postdiv.find("a", target="_blank")
             if (postimg is None):
                 cat = 1
+            elif ("." == postimg['href']): # fake post, skip
+                cat = 1
             else:
                 checkstring = postimg['href']
                 if ("sage" in checkstring):
